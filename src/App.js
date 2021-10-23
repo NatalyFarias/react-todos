@@ -1,25 +1,59 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { Fragment, useState, useRef, useEffect} from "react";
+import { TodoList } from "./components/TodoList";
+import { v4 as uuidv4 } from "uuid";
+const KEY = "todoApp.todos";
+export function App() {
+    const [todos, setTodos] = useState([
+        { id: 1, task: "Tarea 1", completed: false },
+    ]);
+    const todoTaskRef = useRef();
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    useEffect(()=>{
+        const storedTodos = JSON.parse(localStorage.getItem(KEY));
+        if(storedTodos){
+            setTodos(storedTodos);
+        }
+    }, []);
+
+
+    useEffect(() =>{
+        localStorage.setItem(KEY,JSON.stringify(todos)); 
+    }, [todos]);
+
+
+    const toggleTodo = (id) => {
+        const newTodos = [...todos];
+        const todo = newTodos.find((todo) => todo.id===id);
+        todo.completed= !todo.completed;
+        setTodos(newTodos);
+    }
+
+    const handleTodoAdd = () => {
+        const task = todoTaskRef.current.value;
+        if (task === '') return;
+
+        setTodos((prevTodos) => {
+            return [...prevTodos, { id: uuidv4(), task, completed: false }]
+        });
+
+        todoTaskRef.current.value = null;
+
+    };
+
+    const handleClearAllCompleted = ()=>{
+        const newTodos = todos.filter((todo) => !todo.completed);
+        setTodos(newTodos);
+    }
+    return (
+        <Fragment>
+            <TodoList todos={todos} toggleTodo={toggleTodo} />
+            <input ref={todoTaskRef} type="text" placeholder="Nueva Tarea" />
+            <button onClick={handleTodoAdd}>Agregar</button>
+            <button onClick={handleClearAllCompleted}>Limpiar completadas</button>
+            <div>
+                Te quedan {todos.filter((todo) => !todo.completed).length} tareas por terminar
+            </div>
+        </Fragment>
+    );
+
 }
-
-export default App;
